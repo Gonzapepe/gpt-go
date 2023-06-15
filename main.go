@@ -11,17 +11,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-// https://youtu.be/QNIQXpdpBuA?t=1611
-// Me quedé en ese minuto
-
-func GetResponse(client *openai.Client, req openai.ChatCompletionRequest, ctx context.Context, question string, ) {
-	req.Messages = append(req.Messages, openai.ChatCompletionMessage{
-		Role: openai.ChatMessageRoleUser,
-		Content: question,
-	})
-	client.CreateChatCompletion(ctx, req)
-}
-
 func main() {
 	viper.SetConfigFile(".env")
 	viper.ReadInConfig()
@@ -41,7 +30,7 @@ func main() {
 				Content: "You are an experienced lawyer",
 			},
 		},
-		MaxTokens: 10,
+		MaxTokens: 100,
 	}
 
 	rootCmd := &cobra.Command{
@@ -69,4 +58,20 @@ func main() {
 	}
 
 	rootCmd.Execute()
+}
+
+func GetResponse(client *openai.Client, req openai.ChatCompletionRequest, ctx context.Context, question string, ) {
+	req.Messages = append(req.Messages, openai.ChatCompletionMessage{
+		Role: openai.ChatMessageRoleUser,
+		Content: question,
+	})
+	resp, err := client.CreateChatCompletion(ctx, req)
+	if err != nil {
+		fmt.Printf("CreateChatCompletion error: %v\n", err)
+		return
+	}
+
+	fmt.Printf("%s\n\n", resp.Choices[0].Message.Content)
+	req.Messages = append(req.Messages, resp.Choices[0].Message)
+	fmt.Print("> ")
 }
